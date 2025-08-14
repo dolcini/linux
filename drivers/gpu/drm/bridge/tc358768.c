@@ -856,6 +856,13 @@ static void tc358768_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 
 		dsi_hfp = dsi_dpi_htot - dsi_hact - dsi_hsw - dsi_hss;
 
+		if (dsi_hfp & (1U << 31)) { /* Check MSB of 32-bit u32, indicating wraparound/negative */
+			dev_warn(priv->dev, "negative hfp detected, original hsw: %u\n", dsi_hsw);
+			dsi_hfp = 0; /* Set to minimal positive value */
+			dsi_hsw += dsi_hfp; /* Adjust HSW with original difference */
+			dev_warn(priv->dev, "adjusted hfp to %u, new hsw: %u\n", dsi_hfp, dsi_hsw);
+		}
+
 		/*
 		 * Here we should check if HFP is long enough for entering LP
 		 * and exiting LP, but it's not clear how to calculate that.
